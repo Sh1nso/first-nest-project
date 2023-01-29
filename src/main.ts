@@ -4,7 +4,6 @@ import { ValidationPipe } from '@nestjs/common/pipes';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger/dist';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
@@ -12,11 +11,11 @@ async function bootstrap() {
   const configSwagger = new DocumentBuilder()
     .setTitle('Test APi')
     .setDescription('This is API for Test')
-    .setVersion("1.0")
-    .addTag("API")
-    .build()
-  const document = SwaggerModule.createDocument(app, configSwagger)
-  SwaggerModule.setup("api", app, document)
+    .setVersion('1.0')
+    .addTag('API')
+    .build();
+  const document = SwaggerModule.createDocument(app, configSwagger);
+  SwaggerModule.setup('api', app, document);
   await app.listen(3000);
 }
 bootstrap();

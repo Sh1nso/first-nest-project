@@ -1,55 +1,57 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { CreateUserDto } from "./dto/create-user-dto";
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from "src/entitys/user.entity";
-import { Repository } from 'typeorm';
-import { UpdateUserDto } from "./dto/update-user-dto";
-import { hash } from 'bcrypt'
-
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user-dto';
+import { User } from 'src/entities/user.entity';
+import { UpdateUserDto } from './dto/update-user-dto';
+import { UserRepository } from './user.repository';
+import { ServiceError } from 'src/common/errors/service.error';
 
 @Injectable()
-export class UserService{
-    constructor(
-        @InjectRepository(User) private readonly userRepository: Repository<User>,
-      ) {}
+export class UserService {
+  constructor(private readonly userRepository: UserRepository) {}
 
+  async getAll(): Promise<User[]> {
+    return await this.userRepository.getAllUsers();
+  }
 
-      async getAll(): Promise<User[]> {
-        return await this.userRepository.find({relations:['columns']})
-      }
+  async createUser(createUserDto: CreateUserDto): Promise<CreateUserDto> {
+    const newUser = await this.userRepository.createUser(createUserDto);
+    return newUser;
+  }
 
-      async createUser(createUserDto: CreateUserDto): Promise<User> {
-        createUserDto.password = await hash(createUserDto.password, 10)
-        const newUser = this.userRepository.create(createUserDto);
-        await this.userRepository.save(newUser)
-        return newUser
-      }
-          
-      async findUsersById(id: string| number): Promise<User>  {
-        return await this.userRepository.findOne({where: {id}, relations: ['columns']});
-      }
-
-      async findUserByEmail(email: string): Promise<User> {
-        const user = await this.userRepository.findOne({ where: {email} });
-        if (user) {
-          return user;
-        }
-      }
-
-
-      async removeUser(id: string| number): Promise<User>{
-        const user = this.findUsersById(id)
-        await this.userRepository.delete(id)
-        return user
-      }
-
-      async updateUser(id: number, userData: UpdateUserDto): Promise<User>{
-        const updatedPost = await this.userRepository.findOne({where: {id}})
-        await this.userRepository.update(id, userData)
-        if (updatedPost) {
-          return updatedPost
-        }
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND)
-      }
+  async findUsersById(id: number, userId: number): Promise<User> {
+    if (await this.userRepository.checkUserExistAndOwner(id, userId)) {
+      return await this.userRepository.findUsersById(id);
     }
+    throw new ServiceError(
+      'User does not exist or you are not owner of this account ',
+    );
+  }
 
+  async findUserByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findUserByEmail(email);
+    return user;
+  }
+
+  async removeUser(id: number, userId: number): Promise<string> {
+    if (await this.userRepository.checkUserExistAndOwner(id, userId)) {
+      await this.userRepository.delete(id);
+      return `User with id ${id} was deleted`;
+    }
+    throw new ServiceError(
+      'User does not exist or you are not owner of this account ',
+    );
+  }
+
+  async updateUser(
+    id: number,
+    userId: number,
+    userData: UpdateUserDto,
+  ): Promise<User> {
+    if (await this.userRepository.checkUserExistAndOwner(id, userId)) {
+      return await this.userRepository.updateUser(id, userData);
+    }
+    throw new ServiceError(
+      'User does not exist or you are not owner of this account ',
+    );
+  }
+}

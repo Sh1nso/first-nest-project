@@ -1,56 +1,70 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { contentColumn } from 'src/entitys/column.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { ContentColumn } from 'src/entities/column.entity';
 import { CreateColumnDto } from './dto/create-column-dto';
 import { UpdateColumnDto } from './dto/update-column-dto';
+import { ServiceError } from 'src/common/errors/service.error';
+import { ColumnRepository } from './column.repository';
 
 @Injectable()
 export class ColumnService {
-    constructor(
-        @InjectRepository(contentColumn) private readonly columnRepository: Repository<contentColumn>,) {}
+  constructor(private readonly columnRepository: ColumnRepository) {}
 
-    async createColumn(columnData: CreateColumnDto, user): Promise<contentColumn> {
-        const newPost = await this.columnRepository.create({
-          name: columnData.name,
-          description: columnData.discription,
-          user: user.id
-        });
-        await this.columnRepository.save(newPost);
-        return newPost;
-      }
-
-
-    async updateColumn(id: number, columnData: UpdateColumnDto, userData): Promise<contentColumn> {
-        const column = await this.columnRepository.findOne({where: {id}})
-        if (column)
-        {  
-          if (column.user === userData.id)
-          { 
-           console.log(column.user);
-           
-           await this.columnRepository.update(id, {
-           name: columnData.name,
-           description: columnData.discription
-           })
-           const updatedColumn = await this.columnRepository.findOne({where: {id}})
-           return updatedColumn
-
-          }else{throw new HttpException('You are not the owner', HttpStatus.UNAUTHORIZED)}
-        }
-        throw new HttpException('Column not found', HttpStatus.NOT_FOUND)
-      }
-
-    async deleteColumn(id: number, userData){
-      const column = await this.columnRepository.findOne({where: {id}})
-      if (column){
-        if (column.user === userData.id)
-        {
-          await this.columnRepository.delete(id)
-          return `Column with id ${id} has been removed`
-
-        }else{throw new HttpException('You are not the owner', HttpStatus.UNAUTHORIZED)}
-      }
-      throw new HttpException('Column not found', HttpStatus.NOT_FOUND)
+  async getAllUserColumns(userId: number): Promise<ContentColumn[]> {
+    const columns = await this.columnRepository.getAllUserColumns(userId);
+    if (columns.length == 0) {
+      throw new ServiceError("You don't have a column");
     }
+    return columns;
+  }
+
+  async getOneColumn(id: number, userId: number): Promise<ContentColumn> {
+    const column = await this.columnRepository.getOneColumn(id);
+
+    if (column) {
+      if (column.user.id === userId) {
+        return column;
+      }
+      throw new ServiceError('You are not the owner');
+    }
+    throw new ServiceError('Column not found');
+  }
+
+  async createColumn(
+    columnData: CreateColumnDto,
+    user,
+  ): Promise<ContentColumn> {
+    const newPost = await this.columnRepository.createColumn(columnData, user);
+    await this.columnRepository.save(newPost);
+    return newPost;
+  }
+
+  async updateColumn(
+    id: number,
+    columnData: UpdateColumnDto,
+    userId: number,
+  ): Promise<ContentColumn> {
+    if (await this.checkExistAndOwner(id, userId)) {
+      await this.columnRepository.updateColumn(id, {
+        name: columnData.name,
+        description: columnData.description,
+      });
+      const updatedColumn = await this.columnRepository.findOne({
+        where: { id },
+      });
+      return updatedColumn;
+    }
+  }
+
+  async deleteColumn(id: number, userId: number): Promise<string> {
+    if (await this.checkExistAndOwner(id, userId)) {
+      await this.columnRepository.delete(id);
+      return `Column with id ${id} has been removed`;
+    }
+  }
+
+  async checkExistAndOwner(columnId: number, userId: number): Promise<boolean> {
+    if (await this.getOneColumn(columnId, userId)) {
+      return true;
+    }
+  }
 }
