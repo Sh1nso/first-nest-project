@@ -10,9 +10,20 @@ import { AuthUserResponse } from './response/response';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /**
+    * COMMENT
+    * Апи теги обычно пишут как название для группы эндпоинтов что-ли
+    * Тут, я бы написал Api Tags Auth, чтобы в сваггере эти эндпоинты сгруппировались вокруг Auth вкладки
+  */
   @ApiTags('API')
   @ApiResponse({ status: 201, type: CreateUserDto })
   @Post('register')
+  /**
+    * COMMENT
+    * Сразу приучайся разделять слой API и слой логики
+    * Не может быть такого, чтобы один DTO был использован и на API и на сервисах
+    * Нужно делать разные DTO
+  */
   register(@Body() userDto: CreateUserDto): Promise<CreateUserDto> {
     return this.authService.registerUser(userDto);
   }

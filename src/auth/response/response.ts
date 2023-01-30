@@ -1,6 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger/dist';
 import { IsEmail, IsString } from 'class-validator';
 
+/**
+  * COMMENT
+  * Это хорошая идея -- писать для Response свой тип
+  * Можешь для входного DTO писать UserLoginRequest
+  * а для выходного DTO писать UserLoginResponse
+*/
+/**
+  * COMMENT
+  * AuthUserResponse, Auth -- многозначительное слово, за ним может быть и рега и вход
+  * Уточни, это UserLoginResponse?
+*/
+
 export class AuthUserResponse {
   @ApiProperty()
   @IsString()
