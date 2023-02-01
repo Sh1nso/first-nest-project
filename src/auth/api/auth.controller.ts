@@ -2,13 +2,13 @@ import { Controller } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common/decorators';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from 'src/user/dto/create-user-dto';
-import { AuthService } from './auth.service';
-import { RegisterUserApiDto, UserLoginRequestApiDto } from './dto/auth.api.dto';
+import { AuthService } from '../services/auth.service';
+import { RegisterUserApiDto, UserLoginRequestApiDto } from './auth.api.dto';
 import {
   RegisterUserApiResponseDto,
   UserLoginApiResponseDto,
   UserLoginResponseDto,
-} from './response/response';
+} from '../response/response';
 
 @Controller('auth')
 export class AuthController {

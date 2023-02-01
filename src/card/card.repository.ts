@@ -15,26 +15,30 @@ export class CardRepository extends Repository<Card> {
   }
 
   /**
-    * COMMENT
-    * Если у тебя в методе есть союз and, или его можно добавить и ты не соврешь
-    * То это симптом того, что у тебя у метода две "роли"
-    * Такой метод лучше распилить на два, и вызывать оба 
-  */
-  async checkCardExistAndOwner(
+   * COMMENT
+   * Если у тебя в методе есть союз and, или его можно добавить и ты не соврешь
+   * То это симптом того, что у тебя у метода две "роли"
+   * Такой метод лучше распилить на два, и вызывать оба
+   *
+   */
+
+  async getOneCard(userId: number, columnId: number, cardId: number) {
+    const card = await this.cardRepository.findOne({ where: { id: cardId } });
+    if (card && this.checkCardOwner(columnId, userId, card)) {
+      delete card.column;
+      delete card.user;
+      return card;
+    }
+  }
+
+  async checkCardOwner(
     columnId: number,
     userId: number,
-    cardId: number,
+    card: Card,
   ): Promise<boolean> {
-    const card = await this.cardRepository.findOne({
-      where: { id: cardId },
-      relations: ['user', 'column'],
-    });
-
-    if (card) {
-      if (card.user.id === userId) {
-        if (card.column.id === columnId) {
-          return true;
-        }
+    if (card.user.id === userId) {
+      if (card.column.id === columnId) {
+        return true;
       }
     }
   }

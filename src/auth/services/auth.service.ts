@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { BadRequestException } from '@nestjs/common';
-import { UserLoginRequestDto } from './dto/login.dto';
-import { compare } from 'bcrypt';
+import { UserLoginRequestDto } from './login.dto';
+import { compare, hash } from 'bcrypt';
 import { TokenService } from 'src/token/token.service';
 import {
   RegisterUserResponseDto,
   UserLoginResponseDto,
-} from './response/response';
-import { RegisterUserDto } from './dto/auth.dto';
+} from '../response/response';
+import { RegisterUserDto } from './auth.dto';
 import { UserRepository } from 'src/user/user.repository';
 
 @Injectable()
@@ -40,14 +40,25 @@ export class AuthService {
       throw new BadRequestException('User with this email already exist');
     }
 
-     /**
-     * COMMENT 
+    /**
+     * COMMENT
      * Коммент выше поправил, а до сюда не дошел)
      * Тут тоже репозиториевский метод у UserService.
      * Понимаю, что у тебя может быть разрыв шаблона, ведь я писал что в сервисах должны быть мутации данных
      * Тут тогда скорее предлагаю внутрянку createUser перенести в этот метод (в том числе с созданием записи о новом пользователе)
+     *
      */
-    return this.userService.createUser(userDto);
+    /**
+     * ------------
+     * Вообще, возможно я не так понял твой посыл, но я нашел свою причину сделать так, как ты сказал
+     * во-первых, вынести их юзер репозетория Create(это я бы сделал дальше, после утверждения этой части, но все же)
+     * а во-вторых, юзер сервис, на самом деле, не использует create нигде, кроме как тут и по ощущениям она создает еще один уровень вложенности,
+     * сервисы просто перекидываются методом, хотя он используется только тут. Не уверен, на сколько такая прчиниа катируется, но все же
+     */
+    userDto.password = await hash(userDto.password, 10);
+    const newUser = this.userRepository.create(userDto);
+    await this.userRepository.save(newUser);
+    return newUser;
   }
 
   /**

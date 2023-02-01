@@ -21,20 +21,6 @@ export class CardService {
    * Пусть контроллеры ходят в репозитории и сами берут что надо
    * А в сервисах оставим только то, что "мутирует" данные и содержит логику (создание, обновление и удаление)
    */
-  // async getOneCard(
-  //   cardId: number,
-  //   userId: number,
-  //   columnId: number,
-  // ): Promise<ResponseCardDto> {
-  //   if (
-  //     await this.cardRepository.checkCardExistAndOwner(columnId, userId, cardId)
-  //   ) {
-  //     const card = await this.cardRepository.getOneCard(cardId);
-  //     delete card.column;
-  //     delete card.user;
-  //     return card;
-  //   }
-  // }
 
   async updateCard(
     cardId: number,
@@ -42,9 +28,7 @@ export class CardService {
     userId: number,
     updateDto: UpdateCardDto,
   ): Promise<UpdateCardDto> {
-    if (
-      await this.cardRepository.checkCardExistAndOwner(columnId, userId, cardId)
-    ) {
+    if (await this.cardRepository.getOneCard(columnId, userId, cardId)) {
       await this.cardRepository.update(cardId, {
         name: updateDto.name,
         description: updateDto.description,
@@ -62,9 +46,7 @@ export class CardService {
     columnId: number,
     cardId: number,
   ): Promise<boolean> {
-    if (
-      await this.cardRepository.checkCardExistAndOwner(columnId, userId, cardId)
-    ) {
+    if (await this.cardRepository.getOneCard(columnId, userId, cardId)) {
       await this.cardRepository.delete(cardId);
       return true;
     }

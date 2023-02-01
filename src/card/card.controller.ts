@@ -41,25 +41,12 @@ export class CardController {
     try {
       const userId: number = request.user.id;
       /**
-        * COMMENT
-        * Логику по доступам к данным лучше скрыть в репозитории
-        * Сделай в репозитории метод getOneCard, чтобы он принимал userId, columnId и cardId
-        * В контроллере лучше не прописывать так много логики по доступам к данным, это я забыл тебе сказать сори)
-      */
-      if (
-        await this.cardRepository.checkCardExistAndOwner(
-          columnId,
-          userId,
-          cardId,
-        )
-      ) {
-        const card = await this.cardRepository.findOne({
-          where: { id: cardId },
-        });
-        delete card.column;
-        delete card.user;
-        return card;
-      }
+       * COMMENT
+       * Логику по доступам к данным лучше скрыть в репозитории
+       * Сделай в репозитории метод getOneCard, чтобы он принимал userId, columnId и cardId
+       * В контроллере лучше не прописывать так много логики по доступам к данным, это я забыл тебе сказать сори)
+       */
+      return await this.cardRepository.getOneCard(userId, columnId, cardId);
     } catch (error) {
       if (error instanceof ServiceError) {
         throw new HttpException(error, HttpStatus.FORBIDDEN);
