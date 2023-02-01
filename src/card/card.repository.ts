@@ -14,6 +14,12 @@ export class CardRepository extends Repository<Card> {
     );
   }
 
+  /**
+    * COMMENT
+    * Если у тебя в методе есть союз and, или его можно добавить и ты не соврешь
+    * То это симптом того, что у тебя у метода две "роли"
+    * Такой метод лучше распилить на два, и вызывать оба 
+  */
   async checkCardExistAndOwner(
     columnId: number,
     userId: number,

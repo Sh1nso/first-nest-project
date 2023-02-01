@@ -20,7 +20,7 @@ export class AuthService {
   ) {}
 
   /**
-   * COMMENT
+   * COMMENT ✅
    * ДТО для метода сервисах держи рядом с сервисом
    * Сделай лучше здесь (в этой папке) auth.dto.ts и храни дто там
    * Названия ДТО пишутся от названия метода -- на вход RegisterUserDto, на выход RegisterUserResponseDto
@@ -29,7 +29,7 @@ export class AuthService {
     userDto: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
     /**
-     * COMMENT
+     * COMMENT ✅
      * Не делай из сервиса репозиторий, забудь про то, чтобы в сервисе были методы find, update, delete
      * Не стесняйся в сервисах вне папки user (например здесь) использовать репозиторий для user-а
      */
@@ -39,12 +39,24 @@ export class AuthService {
     if (exitUser) {
       throw new BadRequestException('User with this email already exist');
     }
+
+     /**
+     * COMMENT 
+     * Коммент выше поправил, а до сюда не дошел)
+     * Тут тоже репозиториевский метод у UserService.
+     * Понимаю, что у тебя может быть разрыв шаблона, ведь я писал что в сервисах должны быть мутации данных
+     * Тут тогда скорее предлагаю внутрянку createUser перенести в этот метод (в том числе с созданием записи о новом пользователе)
+     */
     return this.userService.createUser(userDto);
   }
 
+  /**
+   * Вот тут очень хорошо сделал
+   * В методе вызовы репозиториев и инкапсулирована логика
+   */
   async loginUser(userDto: UserLoginRequestDto): Promise<UserLoginResponseDto> {
     /**
-     * COMMENT
+     * COMMENT ✅
      * Не делай из сервиса репозиторий, забудь про то, чтобы в сервисе были методы find, update, delete
      * Не стесняйся в сервисах вне папки user (например здесь) использовать репозиторий для user-а
      * throw new BadRequestException('User with this email dose not exist')
@@ -60,9 +72,8 @@ export class AuthService {
       existUser.password,
     );
     /**
-     * COMMENT
+     * COMMENT ✅
      * Не храни текста ошибок в отдельной файле, пиши их inline, прямо в коде ошибки
-     *
      */
     if (!validatePassword) throw new BadRequestException('Wrong data');
     delete existUser.password;

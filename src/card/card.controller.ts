@@ -40,6 +40,12 @@ export class CardController {
   ): Promise<ResponseCardDto> {
     try {
       const userId: number = request.user.id;
+      /**
+        * COMMENT
+        * Логику по доступам к данным лучше скрыть в репозитории
+        * Сделай в репозитории метод getOneCard, чтобы он принимал userId, columnId и cardId
+        * В контроллере лучше не прописывать так много логики по доступам к данным, это я забыл тебе сказать сори)
+      */
       if (
         await this.cardRepository.checkCardExistAndOwner(
           columnId,

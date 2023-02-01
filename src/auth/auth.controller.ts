@@ -18,7 +18,7 @@ export class AuthController {
   @ApiResponse({ status: 201, type: CreateUserDto })
   @Post('register')
   /**
-   * COMMENT
+   * COMMENT ✅
    * Сразу приучайся разделять слой API и слой логики
    * Не может быть такого, чтобы один DTO был использован и на API и на сервисах
    * Нужно делать разные DTO
