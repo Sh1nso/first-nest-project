@@ -27,11 +27,6 @@ export class UserService {
     );
   }
 
-  async findUserByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findUserByEmail(email);
-    return user;
-  }
-
   async removeUser(id: number, userId: number): Promise<string> {
     if (await this.userRepository.checkUserExistAndOwner(id, userId)) {
       await this.userRepository.delete(id);

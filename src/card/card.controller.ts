@@ -14,25 +14,46 @@ import {
 import { ServiceError } from 'src/common/errors/service.error';
 import { Card } from 'src/entities/card.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
+import { CardRepository } from './card.repository';
 import { CardService } from './card.service';
-import { CreateCardDto } from './dto/create-card.dto';
-import { UpdateCardDto } from './dto/update-card.dto';
-import { ResponseCard } from './response/response';
+import { CreateApiCardDto } from './dto/create-card.dto';
+import { UpdateApiCardDto } from './dto/update-card.dto';
+import {
+  ResponseApiCardDto,
+  ResponseCardDto,
+  ResponseUpdateApiCardDto,
+} from './response/response';
 
 @UseGuards(JwtAuthGuard)
 @Controller('column')
 export class CardController {
-  constructor(private readonly cardService: CardService) {}
+  constructor(
+    private readonly cardService: CardService,
+    private readonly cardRepository: CardRepository,
+  ) {}
 
   @Get(':id/card/:cardId')
   async getOneCard(
     @Param('id') columnId: number,
     @Param('cardId') cardId: number,
     @Req() request,
-  ): Promise<ResponseCard> {
+  ): Promise<ResponseCardDto> {
     try {
       const userId: number = request.user.id;
-      return await this.cardService.getOneCard(cardId, userId, columnId);
+      if (
+        await this.cardRepository.checkCardExistAndOwner(
+          columnId,
+          userId,
+          cardId,
+        )
+      ) {
+        const card = await this.cardRepository.findOne({
+          where: { id: cardId },
+        });
+        delete card.column;
+        delete card.user;
+        return card;
+      }
     } catch (error) {
       if (error instanceof ServiceError) {
         throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -41,13 +62,17 @@ export class CardController {
   }
 
   @Get(':id/cards')
-  async getAllCards(@Param('id') id: number): Promise<Card[]> {
+  async getAllCards(@Param('id') columnId: number): Promise<Card[]> {
     try {
-      return await this.cardService.getAll(id);
-    } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
+      const cards = this.cardRepository.find({
+        where: { column: { id: columnId } },
+        relations: ['user'],
+      });
+      if (cards) {
+        return cards;
       }
+    } catch (error) {
+      throw new HttpException(error, HttpStatus.UNAUTHORIZED);
     }
   }
 
@@ -59,7 +84,8 @@ export class CardController {
   ): Promise<string> {
     try {
       const userId = request.user.id;
-      return await this.cardService.deleteCard(userId, columnId, cardId);
+      await this.cardService.deleteCard(userId, columnId, cardId);
+      return `Card with id ${cardId} was deleted`;
     } catch (error) {
       if (error instanceof ServiceError) {
         throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -72,8 +98,8 @@ export class CardController {
     @Param('columnId') columnId,
     @Param('cardId') cardId,
     @Req() request,
-    @Body() updateData: UpdateCardDto,
-  ): Promise<Card> {
+    @Body() updateData: UpdateApiCardDto,
+  ): Promise<ResponseUpdateApiCardDto> {
     try {
       const userId = request.user.id;
       return await this.cardService.updateCard(
@@ -92,12 +118,12 @@ export class CardController {
   @Post(':id/card')
   async createCard(
     @Param('id') id,
-    @Body() createCard: CreateCardDto,
+    @Body() createDataCard: CreateApiCardDto,
     @Req() request,
-  ): Promise<Card> {
+  ): Promise<ResponseApiCardDto> {
     try {
       const user = request.user.id;
-      return await this.cardService.createCard(id, createCard, user);
+      return await this.cardService.createCard(id, createDataCard, user);
     } catch (error) {
       if (error instanceof ServiceError) {
         throw new HttpException(error, HttpStatus.FORBIDDEN);

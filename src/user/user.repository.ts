@@ -34,13 +34,6 @@ export class UserRepository extends Repository<User> {
     });
   }
 
-  async findUserByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email } });
-    if (user) {
-      return user;
-    }
-  }
-
   async removeUser(id: number): Promise<User> {
     const user = this.findUsersById(id);
     await this.userRepository.delete(id);

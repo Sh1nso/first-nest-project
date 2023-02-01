@@ -14,7 +14,7 @@ import { ServiceError } from 'src/common/errors/service.error';
 import { User } from 'src/entities/user.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { UpdateUserDto } from './dto/update-user-dto';
-import { UserService } from './user-service';
+import { UserService } from './user.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
