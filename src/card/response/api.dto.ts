@@ -1,35 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, Length } from 'class-validator';
+import { IsString } from 'class-validator';
 
-export class CreateCardDto {
-  @Length(5, 15)
+export class ResponseApiCardDto {
   @ApiProperty()
   @IsString()
   name: string;
 
-  @Length(5, 15)
   @ApiProperty()
   @IsString()
   theme: string;
 
-  @Length(5, 50)
   @ApiProperty()
   @IsString()
   description: string;
 }
 
-export class CreateApiCardDto {
-  @Length(5, 15)
+export class ResponseUpdateApiCardDto {
   @ApiProperty()
   @IsString()
   name: string;
 
-  @Length(5, 15)
   @ApiProperty()
   @IsString()
   theme: string;
 
-  @Length(5, 50)
   @ApiProperty()
   @IsString()
   description: string;

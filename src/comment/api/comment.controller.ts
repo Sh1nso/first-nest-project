@@ -11,24 +11,31 @@ import {
   Delete,
   Get,
 } from '@nestjs/common';
-import { ServiceError } from 'src/common/errors/service.error';
 import { ContentComment } from 'src/entities/comment.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
-import { CommentService } from './comment.service';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentRepository } from '../comment.repository';
+import { CommentService } from '../service/comment.service';
+import { CreateCommentApiDto } from './create.comment.dto';
+import { UpdateCommentApiDto } from './update.comment.dto';
+import {
+  CreateCommentApiResponseDto,
+  UpdateCommentApiResponseDto,
+} from '../response/api.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('card')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) {}
+  constructor(
+    private readonly commentService: CommentService,
+    private readonly commentRepository: CommentRepository,
+  ) {}
 
   @Post(':id/comment/create')
   createComment(
     @Param('id') cardId: number,
     @Req() request,
-    @Body() commentData: CreateCommentDto,
-  ) {
+    @Body() commentData: CreateCommentApiDto,
+  ): Promise<CreateCommentApiResponseDto> {
     const userId: number = request.user.id;
     return this.commentService.createComment(commentData, userId, cardId);
   }
@@ -38,8 +45,8 @@ export class CommentController {
     @Param('id') cardId: number,
     @Param('commentId') commentId: number,
     @Req() request,
-    @Body() commentData: UpdateCommentDto,
-  ): Promise<ContentComment> {
+    @Body() commentData: UpdateCommentApiDto,
+  ): Promise<UpdateCommentApiResponseDto> {
     try {
       const userId: number = request.user.id;
       return await this.commentService.updateComment(
@@ -49,9 +56,7 @@ export class CommentController {
         commentId,
       );
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -63,11 +68,10 @@ export class CommentController {
   ): Promise<string> {
     try {
       const userId: number = request.user.id;
-      return await this.commentService.deleteComment(userId, cardId, commentId);
+      await this.commentService.deleteComment(userId, cardId, commentId);
+      return `Comment with id ${commentId} was deleted`;
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -79,23 +83,25 @@ export class CommentController {
   ): Promise<ContentComment> {
     try {
       const userId: number = request.user.id;
-      return await this.commentService.getOneComment(userId, cardId, commentId);
+      return await this.commentRepository.getOneComment(
+        userId,
+        cardId,
+        commentId,
+      );
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
   @Get('comments')
-  async getAllUserComments(@Req() request): Promise<ContentComment[]> {
+  async showAllUserComments(@Req() request): Promise<ContentComment[]> {
     try {
       const userId = request.user.id;
-      return await this.commentService.getAllUserComments(userId);
+
+      const comments = await this.commentRepository.getAllComments(userId);
+      return comments;
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 }

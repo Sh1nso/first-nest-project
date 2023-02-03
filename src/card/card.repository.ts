@@ -1,4 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
+import { RepositoryError } from 'src/common/errors/repository.error';
 import { Card } from 'src/entities/card.entity';
 import { Repository } from 'typeorm';
 
@@ -14,21 +15,19 @@ export class CardRepository extends Repository<Card> {
     );
   }
 
-  /**
-   * COMMENT
-   * Если у тебя в методе есть союз and, или его можно добавить и ты не соврешь
-   * То это симптом того, что у тебя у метода две "роли"
-   * Такой метод лучше распилить на два, и вызывать оба
-   *
-   */
-
   async getOneCard(userId: number, columnId: number, cardId: number) {
-    const card = await this.cardRepository.findOne({ where: { id: cardId } });
-    if (card && this.checkCardOwner(columnId, userId, card)) {
-      delete card.column;
-      delete card.user;
-      return card;
+    const card = await this.cardRepository.findOne({
+      where: { id: cardId },
+      relations: ['user', 'column'],
+    });
+    if (card && (await this.checkCardOwner(columnId, userId, card))) {
+      return await this.cardRepository.findOne({
+        where: { id: cardId },
+      });
     }
+    throw new RepositoryError(
+      'You are not owner of with card or card with requested dose not exist',
+    );
   }
 
   async checkCardOwner(
@@ -42,44 +41,4 @@ export class CardRepository extends Repository<Card> {
       }
     }
   }
-
-  /**
-   * COMMENT
-   * Вот тут плохой нейминг
-   * geOneCard, но чем он отличается от стандартного findOne?
-   * Тем, что подсасывает еще реляции
-   * Укажи это в названии
-   * getOneCardWithUserAndColumnRelations
-   * А вообще, я бы такой метод убрал) ничего страшного если в двух местах будет дублирование кода
-   */
-  // async getOneCard(cardId: number) {
-  //   const card = await this.cardRepository.findOne({
-  //     where: { id: cardId },
-  //     relations: ['user', 'column'],
-  //   });
-  //   return card;
-  // }
-
-  /**
-   * COMMENT
-   * то же самое что и выше
-   */
-
-  /**
-   * COMMENT
-   * нужно ли это в отдельный метод выносить?
-   * меня смущает что тут протекает абстракция -- используется дто с уровня сервисов
-   * кажется что такую логику можно писать явно в сервисе, без отдельного метода в репозитории
-   */
-
-  /**
-   * COMMENT
-   * Тут тоже странно какой-то особенный метод, который возвращает строчку)
-   * Опять же, такую мелкую логику лучше прописать в сервисе
-   * А возвращать строчку с ответом (видимо для отображения на клиенте?) ни с уровня сервисов, ни с уровня репозиториев нельзя -- это можно делать только на слое АПИ
-   */
-  /**
-   * COMMENT
-   * не надо такое выносить в отдельный метод, это лишнее, лучше эту логику в сервисе прописать
-   */
 }

@@ -11,18 +11,16 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ServiceError } from 'src/common/errors/service.error';
 import { Card } from 'src/entities/card.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
-import { CardRepository } from './card.repository';
-import { CardService } from './card.service';
-import { CreateApiCardDto } from './dto/create-card.dto';
-import { UpdateApiCardDto } from './dto/update-card.dto';
+import { CardRepository } from '../card.repository';
 import {
   ResponseApiCardDto,
-  ResponseCardDto,
   ResponseUpdateApiCardDto,
-} from './response/response';
+} from '../response/api.dto';
+import { CardService } from '../service/card.service';
+import { CreateApiCardDto } from './create.card.dto';
+import { UpdateApiCardDto } from './update.card.dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('column')
@@ -37,20 +35,12 @@ export class CardController {
     @Param('id') columnId: number,
     @Param('cardId') cardId: number,
     @Req() request,
-  ): Promise<ResponseCardDto> {
+  ): Promise<Card> {
     try {
       const userId: number = request.user.id;
-      /**
-       * COMMENT
-       * Логику по доступам к данным лучше скрыть в репозитории
-       * Сделай в репозитории метод getOneCard, чтобы он принимал userId, columnId и cardId
-       * В контроллере лучше не прописывать так много логики по доступам к данным, это я забыл тебе сказать сори)
-       */
       return await this.cardRepository.getOneCard(userId, columnId, cardId);
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -80,9 +70,7 @@ export class CardController {
       await this.cardService.deleteCard(userId, columnId, cardId);
       return `Card with id ${cardId} was deleted`;
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -102,9 +90,7 @@ export class CardController {
         updateData,
       );
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 
@@ -118,9 +104,7 @@ export class CardController {
       const user = request.user.id;
       return await this.cardService.createCard(id, createDataCard, user);
     } catch (error) {
-      if (error instanceof ServiceError) {
-        throw new HttpException(error, HttpStatus.FORBIDDEN);
-      }
+      throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
   }
 }

@@ -1,8 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
+import { RepositoryError } from 'src/common/errors/repository.error';
 import { ContentComment } from 'src/entities/comment.entity';
 import { Repository } from 'typeorm';
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
 
 export class CommentRepository extends Repository<ContentComment> {
   constructor(
@@ -16,55 +15,36 @@ export class CommentRepository extends Repository<ContentComment> {
     );
   }
 
-  async checkExistCommentInCardAndOwner(
-    commentId: number,
-    cardId: number,
-    userId: number,
-  ): Promise<boolean> {
+  async getAllComments(userId: number): Promise<ContentComment[]> {
+    const comments = await this.commentRepository.find({
+      where: { user: { id: userId } },
+    });
+    if (comments.length != 0) {
+      return comments;
+    }
+    throw new RepositoryError(`You don't have comments`);
+  }
+
+  async getOneComment(userId: number, cardId: number, commentId: number) {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations: ['card', 'user'],
+      relations: ['user', 'card'],
     });
-    if (comment) {
-      if (comment.card.id === cardId && comment.user.id === userId) {
+    if (comment && this.checkCommentOwner(cardId, userId, comment)) {
+      return comment;
+    }
+    throw new RepositoryError('Comment does not exist or you are not owner');
+  }
+
+  async checkCommentOwner(
+    cardId: number,
+    userId: number,
+    card: ContentComment,
+  ): Promise<boolean> {
+    if (card.user.id === userId) {
+      if (card.card.id === cardId) {
         return true;
       }
     }
-  }
-
-  async updateComment(commentId: number, updateData: UpdateCommentDto) {
-    await this.commentRepository.update(commentId, updateData);
-    return this.commentRepository.findOne({ where: { id: commentId } });
-  }
-
-  async createComment(
-    commentData: CreateCommentDto,
-    userId,
-    cardId,
-  ): Promise<ContentComment> {
-    const newComment = await this.commentRepository.create({
-      content: commentData.content,
-      user: userId,
-      card: cardId,
-    });
-    await this.commentRepository.save(newComment);
-    return newComment;
-  }
-
-  async deleteComment(commentId: number): Promise<string> {
-    await this.commentRepository.delete(commentId);
-    return `Comment with id ${commentId} was deleted`;
-  }
-
-  async getOneComment(commentId: number): Promise<ContentComment> {
-    return await this.commentRepository.findOne({ where: { id: commentId } });
-  }
-
-  async getAllUserComments(userId: number): Promise<ContentComment[]> {
-    const comments = await this.commentRepository.find({
-      where: { user: { id: userId } },
-      relations: ['card'],
-    });
-    return comments;
   }
 }

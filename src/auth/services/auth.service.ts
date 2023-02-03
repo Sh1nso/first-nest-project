@@ -1,38 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
 import { BadRequestException } from '@nestjs/common';
 import { UserLoginRequestDto } from './login.dto';
 import { compare, hash } from 'bcrypt';
 import { TokenService } from 'src/token/token.service';
+import { RegisterUserDto } from './auth.dto';
+import { UserRepository } from 'src/user/user.repository';
 import {
   RegisterUserResponseDto,
   UserLoginResponseDto,
-} from '../response/response';
-import { RegisterUserDto } from './auth.dto';
-import { UserRepository } from 'src/user/user.repository';
+} from '../response/service.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
     private readonly tokenService: TokenService,
     private readonly userRepository: UserRepository,
   ) {}
 
-  /**
-   * COMMENT ✅
-   * ДТО для метода сервисах держи рядом с сервисом
-   * Сделай лучше здесь (в этой папке) auth.dto.ts и храни дто там
-   * Названия ДТО пишутся от названия метода -- на вход RegisterUserDto, на выход RegisterUserResponseDto
-   */
   async registerUser(
     userDto: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
-    /**
-     * COMMENT ✅
-     * Не делай из сервиса репозиторий, забудь про то, чтобы в сервисе были методы find, update, delete
-     * Не стесняйся в сервисах вне папки user (например здесь) использовать репозиторий для user-а
-     */
     const exitUser = await this.userRepository.findOne({
       where: { email: userDto.email },
     });
@@ -40,38 +27,13 @@ export class AuthService {
       throw new BadRequestException('User with this email already exist');
     }
 
-    /**
-     * COMMENT
-     * Коммент выше поправил, а до сюда не дошел)
-     * Тут тоже репозиториевский метод у UserService.
-     * Понимаю, что у тебя может быть разрыв шаблона, ведь я писал что в сервисах должны быть мутации данных
-     * Тут тогда скорее предлагаю внутрянку createUser перенести в этот метод (в том числе с созданием записи о новом пользователе)
-     *
-     */
-    /**
-     * ------------
-     * Вообще, возможно я не так понял твой посыл, но я нашел свою причину сделать так, как ты сказал
-     * во-первых, вынести их юзер репозетория Create(это я бы сделал дальше, после утверждения этой части, но все же)
-     * а во-вторых, юзер сервис, на самом деле, не использует create нигде, кроме как тут и по ощущениям она создает еще один уровень вложенности,
-     * сервисы просто перекидываются методом, хотя он используется только тут. Не уверен, на сколько такая прчиниа катируется, но все же
-     */
     userDto.password = await hash(userDto.password, 10);
     const newUser = this.userRepository.create(userDto);
     await this.userRepository.save(newUser);
     return newUser;
   }
 
-  /**
-   * Вот тут очень хорошо сделал
-   * В методе вызовы репозиториев и инкапсулирована логика
-   */
   async loginUser(userDto: UserLoginRequestDto): Promise<UserLoginResponseDto> {
-    /**
-     * COMMENT ✅
-     * Не делай из сервиса репозиторий, забудь про то, чтобы в сервисе были методы find, update, delete
-     * Не стесняйся в сервисах вне папки user (например здесь) использовать репозиторий для user-а
-     * throw new BadRequestException('User with this email dose not exist')
-     */
     const existUser = await this.userRepository.findOne({
       where: { email: userDto.email },
     });
@@ -82,10 +44,7 @@ export class AuthService {
       userDto.password,
       existUser.password,
     );
-    /**
-     * COMMENT ✅
-     * Не храни текста ошибок в отдельной файле, пиши их inline, прямо в коде ошибки
-     */
+
     if (!validatePassword) throw new BadRequestException('Wrong data');
     delete existUser.password;
 

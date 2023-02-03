@@ -1,8 +1,7 @@
 import { ContentColumn } from 'src/entities/column.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateColumnDto } from './dto/create-column-dto';
-import { UpdateColumnDto } from './dto/update-column-dto';
+import { RepositoryError } from 'src/common/errors/repository.error';
 
 export class ColumnRepository extends Repository<ContentColumn> {
   constructor(
@@ -20,47 +19,31 @@ export class ColumnRepository extends Repository<ContentColumn> {
     const columns = await this.columnRepository.find({
       where: { user: { id: userId } },
     });
-    return columns;
+    if (columns) {
+      return columns;
+    }
+    throw new RepositoryError(`You don't have columns`);
   }
 
-  async getOneColumn(id: number): Promise<ContentColumn> {
+  async getOneColumn(columnId: number, userId: number) {
     const column = await this.columnRepository.findOne({
-      where: { id },
+      where: { id: columnId },
       relations: ['user'],
     });
-
-    return column;
+    if (column && (await this.checkColumnOwner(userId, column))) {
+      return column;
+    }
+    throw new RepositoryError(
+      `You are not owner of this column or column with requested id does not exist`,
+    );
   }
 
-  async createColumn(
-    columnData: CreateColumnDto,
-    user,
-  ): Promise<ContentColumn> {
-    const newPost = await this.columnRepository.create({
-      name: columnData.name,
-      description: columnData.description,
-      user: user.id,
-    });
-    await this.columnRepository.save(newPost);
-    return newPost;
-  }
-
-  async updateColumn(
-    id: number,
-    columnData: UpdateColumnDto,
-  ): Promise<ContentColumn> {
-    await this.columnRepository.update(id, {
-      name: columnData.name,
-      description: columnData.description,
-    });
-    const updatedColumn = await this.columnRepository.findOne({
-      where: { id },
-    });
-    return updatedColumn;
-  }
-
-  async deleteColumn(id: number) {
-    await this.columnRepository.delete(id);
-    return `Column with id ${id} has been removed`;
+  async checkColumnOwner(
+    userId: number,
+    column: ContentColumn,
+  ): Promise<boolean> {
+    if (column.user.id === userId) {
+      return true;
+    }
   }
 }
