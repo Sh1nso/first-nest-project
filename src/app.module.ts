@@ -7,20 +7,20 @@ import { TokenModule } from './token/token.module';
 import { ColumnModule } from './column/column.module';
 import { CardModule } from './card/card.module';
 import { CommentModule } from './comment/comment.module';
-import { TypeOrmModule } from './db/typeorm/typeorm.module';
 import { ConfigModule } from './config/config.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { dataSourceOptions } from 'db/data-source';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule,
+    TypeOrmModule.forRoot(dataSourceOptions),
     UserModule,
     AuthModule,
     TokenModule,
     ColumnModule,
     CardModule,
     CommentModule,
-    TypeOrmModule,
   ],
   controllers: [AppController],
   providers: [AppService],
