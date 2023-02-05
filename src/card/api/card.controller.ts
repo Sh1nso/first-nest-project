@@ -5,22 +5,23 @@ import {
   Post,
   Param,
   Body,
-  Req,
   Delete,
   Put,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { Card } from 'src/entities/card.entity';
+import { User } from 'src/entities/user.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { CardRepository } from '../card.repository';
+import { CardService } from '../service/card.service';
 import {
+  CreateApiCardDto,
   ResponseApiCardDto,
   ResponseUpdateApiCardDto,
-} from '../response/api.dto';
-import { CardService } from '../service/card.service';
-import { CreateApiCardDto } from './create.card.dto';
-import { UpdateApiCardDto } from './update.card.dto';
+  UpdateApiCardDto,
+} from './dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('column')
@@ -34,10 +35,10 @@ export class CardController {
   async getOneCard(
     @Param('id') columnId: number,
     @Param('cardId') cardId: number,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<Card> {
     try {
-      const userId: number = request.user.id;
+      const userId: number = user.id;
       return await this.cardRepository.getOneCard(userId, columnId, cardId);
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -63,10 +64,10 @@ export class CardController {
   async deleteCard(
     @Param('columnId') columnId,
     @Param('cardId') cardId,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<string> {
     try {
-      const userId = request.user.id;
+      const userId: number = user.id;
       await this.cardService.deleteCard(userId, columnId, cardId);
       return `Card with id ${cardId} was deleted`;
     } catch (error) {
@@ -78,17 +79,19 @@ export class CardController {
   async updateCard(
     @Param('columnId') columnId,
     @Param('cardId') cardId,
-    @Req() request,
-    @Body() updateData: UpdateApiCardDto,
+    @CurrentUser() user: User,
+    @Body() body: UpdateApiCardDto,
   ): Promise<ResponseUpdateApiCardDto> {
     try {
-      const userId = request.user.id;
-      return await this.cardService.updateCard(
-        cardId,
-        columnId,
-        userId,
-        updateData,
-      );
+      const userId: number = user.id;
+      return await this.cardService.updateCard({
+        name: body.name,
+        description: body.description,
+        theme: body.theme,
+        cardId: cardId,
+        columnId: columnId,
+        userId: userId,
+      });
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
@@ -96,13 +99,19 @@ export class CardController {
 
   @Post(':id/card')
   async createCard(
-    @Param('id') id,
-    @Body() createDataCard: CreateApiCardDto,
-    @Req() request,
+    @Param('id') columnId,
+    @Body() body: CreateApiCardDto,
+    @CurrentUser() user: User,
   ): Promise<ResponseApiCardDto> {
     try {
-      const user = request.user.id;
-      return await this.cardService.createCard(id, createDataCard, user);
+      const userId: number = user.id;
+      return await this.cardService.createCard({
+        name: body.name,
+        description: body.description,
+        theme: body.theme,
+        columnId: columnId,
+        userId: userId,
+      });
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
     }

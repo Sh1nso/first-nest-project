@@ -10,6 +10,6 @@ import { CardRepository } from './card.repository';
   imports: [TypeOrmModule.forFeature([Card]), ColumnModule],
   providers: [CardService, CardRepository],
   controllers: [CardController],
-  exports: [CardService],
+  exports: [CardService, CardRepository],
 })
 export class CardModule {}

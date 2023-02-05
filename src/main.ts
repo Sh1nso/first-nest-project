@@ -7,12 +7,11 @@ import { SwaggerModule } from '@nestjs/swagger/dist';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
-
   const configSwagger = new DocumentBuilder()
     .setTitle('Test APi')
     .setDescription('This is API for Test')
     .setVersion('1.0')
-    .addTag('API')
+    .addTag('Api Tags Auth')
     .build();
   const document = SwaggerModule.createDocument(app, configSwagger);
   SwaggerModule.setup('api', app, document);

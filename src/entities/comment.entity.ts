@@ -29,8 +29,12 @@ export class ContentComment {
   @ManyToOne(() => User, (user) => user.comments, { onDelete: 'SET NULL' })
   user: User;
 
+  userId: User[`id`];
+
   @ManyToOne(() => Card, (card) => card.comments, {
     onDelete: 'SET NULL',
   })
   card: Card;
+
+  cardId: Card[`id`];
 }

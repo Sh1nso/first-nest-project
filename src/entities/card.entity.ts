@@ -33,10 +33,14 @@ export class Card {
   @ManyToOne(() => User, (user) => user.cards, { onDelete: 'SET NULL' })
   user: User;
 
+  userId: User['id'];
+
   @ManyToOne(() => ContentColumn, (column) => column.cards, {
     onDelete: 'SET NULL',
   })
   column: ContentColumn;
+
+  columnId: ContentColumn['id'];
 
   @OneToMany(() => ContentComment, (comment) => comment.card, {
     onDelete: 'CASCADE',

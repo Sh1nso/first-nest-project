@@ -6,7 +6,6 @@ import {
   Delete,
   Put,
   UseGuards,
-  Req,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
@@ -14,8 +13,8 @@ import { User } from 'src/entities/user.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { UserRepository } from '../user.repository';
 import { UserService } from '../service/user.service';
-import { UpdateUserApiDto } from './update.dto';
-import { UpdateUserResponseApiDto } from '../response/api.response';
+import { UpdateUserApiDto, UpdateUserResponseApiDto } from './dto';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -33,11 +32,10 @@ export class UserController {
   @Get(':id')
   async showOneUser(
     @Param('id') userId: number,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<User> {
     try {
-      const requestedUserId = request.user.id;
-
+      const requestedUserId: number = user.id;
       return await this.userRepository.getOneUser(userId, requestedUserId);
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -47,10 +45,10 @@ export class UserController {
   @Delete(':id')
   async deleteUser(
     @Param('id') userId: number,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<string> {
     try {
-      const requestedUserId = request.user.id;
+      const requestedUserId: number = user.id;
       await this.userService.deleteUser(userId, requestedUserId);
       return `User with id ${userId} was deleted`;
     } catch (error) {
@@ -61,16 +59,18 @@ export class UserController {
   @Put(':id')
   async updateUser(
     @Param('id') userId: number,
-    @Body() userData: UpdateUserApiDto,
-    @Req() request,
+    @Body() body: UpdateUserApiDto,
+    @CurrentUser() user: User,
   ): Promise<UpdateUserResponseApiDto> {
     try {
-      const requestedUserId = request.user.id;
-      return await this.userService.updateUser(
-        userId,
-        requestedUserId,
-        userData,
-      );
+      const requestedUserId: number = user.id;
+      return await this.userService.updateUser({
+        userId: userId,
+        requestedUserId: requestedUserId,
+        username: body.username,
+        password: body.password,
+        email: body.email,
+      });
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
     }

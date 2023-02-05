@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateUserDto } from './update.user.dto';
 import { UserRepository } from '../user.repository';
-import { UpdateUserResponseDto } from '../response/service.response';
 import { hash } from 'bcrypt';
+import { UpdateUserDto, UpdateUserResponseDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -15,20 +14,16 @@ export class UserService {
     }
   }
 
-  async updateUser(
-    userId: number,
-    requestedUserId: number,
-    userData: UpdateUserDto,
-  ): Promise<UpdateUserResponseDto> {
-    if (await this.userRepository.getOneUser(userId, requestedUserId)) {
-      const hashedPassword = await hash(userData.password, 10);
-      await this.userRepository.update(userId, {
-        username: userData.username,
-        email: userData.email,
+  async updateUser(dto: UpdateUserDto): Promise<UpdateUserResponseDto> {
+    if (await this.userRepository.getOneUser(dto.userId, dto.requestedUserId)) {
+      const hashedPassword = await hash(dto.password, 10);
+      await this.userRepository.update(dto.userId, {
+        username: dto.username,
+        email: dto.email,
         password: hashedPassword,
       });
       return await this.userRepository.findOne({
-        where: { id: userId },
+        where: { id: dto.userId },
         select: ['username', 'email'],
       });
     }

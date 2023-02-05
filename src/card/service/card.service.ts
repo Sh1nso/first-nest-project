@@ -3,11 +3,11 @@ import { ColumnRepository } from 'src/column/column.repository';
 
 import { CardRepository } from '../card.repository';
 import {
+  CreateCardDto,
   ResponseCardDto,
   ResponseUpdateCardDto,
-} from '../response/service.dto';
-import { CreateCardDto } from './create.card.dto';
-import { UpdateCardDto } from './update.card.dto';
+  UpdateCardDto,
+} from './dto';
 
 @Injectable()
 export class CardService {
@@ -16,20 +16,17 @@ export class CardService {
     private readonly columnRepository: ColumnRepository,
   ) {}
 
-  async updateCard(
-    cardId: number,
-    columnId: number,
-    userId: number,
-    updateDto: UpdateCardDto,
-  ): Promise<ResponseUpdateCardDto> {
-    if (await this.cardRepository.getOneCard(userId, columnId, cardId)) {
-      await this.cardRepository.update(cardId, {
-        name: updateDto.name,
-        description: updateDto.description,
-        theme: updateDto.theme,
+  async updateCard(dto: UpdateCardDto): Promise<ResponseUpdateCardDto> {
+    if (
+      await this.cardRepository.getOneCard(dto.userId, dto.columnId, dto.cardId)
+    ) {
+      await this.cardRepository.update(dto.cardId, {
+        name: dto.name,
+        description: dto.description,
+        theme: dto.theme,
       });
       return await this.cardRepository.findOne({
-        where: { id: cardId },
+        where: { id: dto.cardId },
         select: ['description', 'name', 'theme'],
       });
     }
@@ -46,20 +43,15 @@ export class CardService {
     }
   }
 
-  async createCard(
-    columnId,
-    card: CreateCardDto,
-    userId,
-  ): Promise<ResponseCardDto> {
-    if (await this.columnRepository.getOneColumn(columnId, userId)) {
-      const newCard = this.cardRepository.create({
-        name: card.name,
-        description: card.description,
-        theme: card.theme,
-        user: userId,
-        column: columnId,
+  async createCard(dto: CreateCardDto): Promise<ResponseCardDto> {
+    if (await this.columnRepository.getOneColumn(dto.columnId, dto.userId)) {
+      const newCard = await this.cardRepository.save({
+        name: dto.name,
+        description: dto.description,
+        theme: dto.theme,
+        userId: dto.userId,
+        columnId: dto.columnId,
       });
-      await this.cardRepository.save(newCard);
 
       delete newCard.user;
       delete newCard.column;

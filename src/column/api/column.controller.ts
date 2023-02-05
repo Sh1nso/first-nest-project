@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Post,
-  Req,
   UseGuards,
   Put,
   Param,
@@ -11,16 +10,19 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ContentColumn } from 'src/entities/column.entity';
+import { User } from 'src/entities/user.entity';
 import { JwtAuthGuard } from 'src/guards/jwt-guard';
 import { ColumnRepository } from '../column.repository';
-import {
-  CreateColumnResponseApiDto,
-  UpdateColumnResponseApiDto,
-} from '../response/api.dto';
+
 import { ColumnService } from '../service/column.service';
-import { CreateColumnApiDto } from './create.column.dto';
-import { UpdateColumnApiDto } from './update.column.dto';
+import {
+  CreateColumnApiDto,
+  CreateColumnResponseApiDto,
+  UpdateColumnApiDto,
+  UpdateColumnResponseApiDto,
+} from './dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('column')
@@ -31,9 +33,9 @@ export class ColumnController {
   ) {}
 
   @Get('')
-  async getAllColumns(@Req() request): Promise<ContentColumn[]> {
+  async getAllColumns(@CurrentUser() user: User): Promise<ContentColumn[]> {
     try {
-      const userId = request.user.id;
+      const userId = user.id;
       return await this.columnRepository.getAllUserColumns(userId);
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -43,10 +45,10 @@ export class ColumnController {
   @Get(':id')
   async getOneColumn(
     @Param('id') columnId: number,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<ContentColumn> {
     try {
-      const userId = request.user.id;
+      const userId: number = user.id;
       return await this.columnRepository.getOneColumn(columnId, userId);
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
@@ -55,22 +57,31 @@ export class ColumnController {
 
   @Post('create')
   async createColumn(
-    @Body() columnDto: CreateColumnApiDto,
-    @Req() request,
+    @Body() body: CreateColumnApiDto,
+    @CurrentUser() user: User,
   ): Promise<CreateColumnResponseApiDto> {
-    const user = request.user;
-    return await this.columnService.createColumn(columnDto, user);
+    const userId: number = user.id;
+    return await this.columnService.createColumn({
+      name: body.name,
+      description: body.description,
+      userId: userId,
+    });
   }
 
   @Put(':id')
   async updateColumn(
-    @Param('id') id: number,
-    @Body() updateDto: UpdateColumnApiDto,
-    @Req() request,
+    @Param('id') columnId: number,
+    @Body() body: UpdateColumnApiDto,
+    @CurrentUser() user: User,
   ): Promise<UpdateColumnResponseApiDto> {
     try {
-      const user = request.user.id;
-      return await this.columnService.updateColumn(id, updateDto, user);
+      const userId: number = user.id;
+      return await this.columnService.updateColumn({
+        name: body.name,
+        description: body.description,
+        columnId: columnId,
+        userId: userId,
+      });
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);
     }
@@ -79,11 +90,11 @@ export class ColumnController {
   @Delete(':id')
   async deleteColumn(
     @Param('id') columnId: number,
-    @Req() request,
+    @CurrentUser() user: User,
   ): Promise<string> {
     try {
-      const user = request.user.id;
-      await this.columnService.deleteColumn(columnId, user);
+      const userId = user.id;
+      await this.columnService.deleteColumn(columnId, userId);
       return `Column with id ${columnId} was deleted`;
     } catch (error) {
       throw new HttpException(error, HttpStatus.FORBIDDEN);

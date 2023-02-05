@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common';
-import { UserLoginRequestDto } from './login.dto';
 import { compare, hash } from 'bcrypt';
 import { TokenService } from 'src/token/token.service';
-import { RegisterUserDto } from './auth.dto';
 import { UserRepository } from 'src/user/user.repository';
 import {
+  RegisterUserDto,
   RegisterUserResponseDto,
+  UserLoginRequestDto,
   UserLoginResponseDto,
-} from '../response/service.dto';
+} from './dto';
 
 @Injectable()
 export class AuthService {
@@ -17,33 +17,28 @@ export class AuthService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async registerUser(
-    userDto: RegisterUserDto,
-  ): Promise<RegisterUserResponseDto> {
+  async registerUser(dto: RegisterUserDto): Promise<RegisterUserResponseDto> {
     const exitUser = await this.userRepository.findOne({
-      where: { email: userDto.email },
+      where: { email: dto.email },
     });
     if (exitUser) {
       throw new BadRequestException('User with this email already exist');
     }
 
-    userDto.password = await hash(userDto.password, 10);
-    const newUser = this.userRepository.create(userDto);
+    dto.password = await hash(dto.password, 10);
+    const newUser = this.userRepository.create(dto);
     await this.userRepository.save(newUser);
     return newUser;
   }
 
-  async loginUser(userDto: UserLoginRequestDto): Promise<UserLoginResponseDto> {
+  async loginUser(dto: UserLoginRequestDto): Promise<UserLoginResponseDto> {
     const existUser = await this.userRepository.findOne({
-      where: { email: userDto.email },
+      where: { email: dto.email },
     });
     if (!existUser)
       throw new BadRequestException('User with this email dose not exist');
 
-    const validatePassword = await compare(
-      userDto.password,
-      existUser.password,
-    );
+    const validatePassword = await compare(dto.password, existUser.password);
 
     if (!validatePassword) throw new BadRequestException('Wrong data');
     delete existUser.password;

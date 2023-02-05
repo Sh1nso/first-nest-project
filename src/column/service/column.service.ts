@@ -1,49 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { CreateColumnDto } from './create.column.dto';
-import { UpdateColumnDto } from './update.column.dto';
-import { ServiceError } from 'src/common/errors/service.error';
 import { ColumnRepository } from '../column.repository';
 import {
+  CreateColumnDto,
   CreateColumnResponseDto,
+  UpdateColumnDto,
   UpdateColumnResponseDto,
-} from '../response/service.dto';
+} from './dto';
 
 @Injectable()
 export class ColumnService {
   constructor(private readonly columnRepository: ColumnRepository) {}
 
-  async createColumn(
-    columnData: CreateColumnDto,
-    user,
-  ): Promise<CreateColumnResponseDto> {
-    const newPost = this.columnRepository.create({
-      name: columnData.name,
-      description: columnData.description,
-      user: user.id,
+  async createColumn(dto: CreateColumnDto): Promise<CreateColumnResponseDto> {
+    const newColumn = await this.columnRepository.save({
+      name: dto.name,
+      description: dto.description,
+      userId: dto.userId,
     });
-    await this.columnRepository.save(newPost);
-    return newPost;
+    return newColumn;
   }
 
-  async updateColumn(
-    columnId: number,
-    columnData: UpdateColumnDto,
-    userId: number,
-  ): Promise<UpdateColumnResponseDto> {
-    if (await this.columnRepository.getOneColumn(columnId, userId)) {
-      await this.columnRepository.update(columnId, {
-        name: columnData.name,
-        description: columnData.description,
+  async updateColumn(dto: UpdateColumnDto): Promise<UpdateColumnResponseDto> {
+    if (await this.columnRepository.getOneColumn(dto.columnId, dto.userId)) {
+      await this.columnRepository.update(dto.columnId, {
+        name: dto.name,
+        description: dto.description,
       });
       const updatedColumn = await this.columnRepository.findOne({
-        where: { id: columnId },
+        where: { id: dto.columnId },
         select: ['description', 'name'],
       });
       return updatedColumn;
     }
-    throw new ServiceError(
-      'You are not owner of this column or column with requested id does not exist',
-    );
   }
 
   async deleteColumn(columnId: number, userId: number): Promise<boolean> {
@@ -51,8 +39,5 @@ export class ColumnService {
       await this.columnRepository.delete(columnId);
       return true;
     }
-    throw new ServiceError(
-      'You are not owner of this column or column with requested id does not exist',
-    );
   }
 }
