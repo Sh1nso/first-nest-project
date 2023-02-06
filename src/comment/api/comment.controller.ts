@@ -32,7 +32,7 @@ export class CommentController {
   ) {}
 
   @Post(':id/comment/create')
-  createComment(
+  async createComment(
     @Param('id') cardId: number,
     @CurrentUser() user: User,
     @Body() body: CreateCommentApiDto,

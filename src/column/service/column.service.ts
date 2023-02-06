@@ -12,11 +12,12 @@ export class ColumnService {
   constructor(private readonly columnRepository: ColumnRepository) {}
 
   async createColumn(dto: CreateColumnDto): Promise<CreateColumnResponseDto> {
-    const newColumn = await this.columnRepository.save({
+    const newC = this.columnRepository.create({
       name: dto.name,
       description: dto.description,
-      userId: dto.userId,
+      user: dto.userId,
     });
+    const newColumn = await this.columnRepository.save(newC);
     return newColumn;
   }
 

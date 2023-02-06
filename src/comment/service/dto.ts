@@ -1,9 +1,9 @@
 export class CreateCommentDto {
   content: string;
 
-  userId: number;
+  userId;
 
-  cardId: number;
+  cardId;
 }
 
 export class UpdateCommentDto {

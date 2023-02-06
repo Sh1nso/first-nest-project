@@ -83,7 +83,7 @@ export class ColumnController {
         userId: userId,
       });
     } catch (error) {
-      throw new HttpException(error, HttpStatus.FORBIDDEN);
+      throw error;
     }
   }
 

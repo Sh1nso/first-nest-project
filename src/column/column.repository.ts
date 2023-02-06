@@ -30,6 +30,7 @@ export class ColumnRepository extends Repository<ContentColumn> {
       where: { id: columnId },
       relations: ['user'],
     });
+
     if (column && (await this.checkColumnOwner(userId, column))) {
       return column;
     }
@@ -42,6 +43,7 @@ export class ColumnRepository extends Repository<ContentColumn> {
     userId: number,
     column: ContentColumn,
   ): Promise<boolean> {
+    console.log(column);
     if (column.user.id === userId) {
       return true;
     }
