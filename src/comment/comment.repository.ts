@@ -28,7 +28,6 @@ export class CommentRepository extends Repository<ContentComment> {
   async getOneComment(userId: number, cardId: number, commentId: number) {
     const comment = await this.commentRepository.findOne({
       where: { id: commentId },
-      relations: ['user', 'card'],
     });
     if (comment && this.checkCommentOwner(cardId, userId, comment)) {
       return comment;
@@ -39,10 +38,10 @@ export class CommentRepository extends Repository<ContentComment> {
   async checkCommentOwner(
     cardId: number,
     userId: number,
-    card: ContentComment,
+    comment: ContentComment,
   ): Promise<boolean> {
-    if (card.user.id === userId) {
-      if (card.card.id === cardId) {
+    if (comment.userId === userId) {
+      if (comment.cardId === cardId) {
         return true;
       }
     }

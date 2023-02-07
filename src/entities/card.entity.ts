@@ -33,6 +33,7 @@ export class Card {
   @ManyToOne(() => User, (user) => user.cards, { onDelete: 'SET NULL' })
   user: User;
 
+  @Column({ nullable: true })
   userId: User['id'];
 
   @ManyToOne(() => ContentColumn, (column) => column.cards, {
@@ -40,6 +41,7 @@ export class Card {
   })
   column: ContentColumn;
 
+  @Column({ nullable: true })
   columnId: ContentColumn['id'];
 
   @OneToMany(() => ContentComment, (comment) => comment.card, {

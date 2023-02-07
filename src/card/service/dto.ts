@@ -5,9 +5,9 @@ export class CreateCardDto {
 
   description: string;
 
-  columnId;
+  columnId: number;
 
-  userId;
+  userId: number;
 }
 
 export class UpdateCardDto {

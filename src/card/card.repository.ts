@@ -18,7 +18,6 @@ export class CardRepository extends Repository<Card> {
   async getOneCard(userId: number, columnId: number, cardId: number) {
     const card = await this.cardRepository.findOne({
       where: { id: cardId },
-      relations: ['user', 'column'],
     });
     if (card && (await this.checkCardOwner(columnId, userId, card))) {
       return await this.cardRepository.findOne({
@@ -35,8 +34,8 @@ export class CardRepository extends Repository<Card> {
     userId: number,
     card: Card,
   ): Promise<boolean> {
-    if (card.user.id === userId) {
-      if (card.column.id === columnId) {
+    if (card.userId === userId) {
+      if (card.columnId === columnId) {
         return true;
       }
     }

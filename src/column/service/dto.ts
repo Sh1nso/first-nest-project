@@ -3,7 +3,7 @@ export class CreateColumnDto {
 
   description?: string;
 
-  userId;
+  userId: number;
 }
 
 export class UpdateColumnDto {
@@ -13,7 +13,7 @@ export class UpdateColumnDto {
 
   columnId: number;
 
-  userId;
+  userId: number;
 }
 
 export class CreateColumnResponseDto {

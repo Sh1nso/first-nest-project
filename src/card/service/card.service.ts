@@ -49,8 +49,8 @@ export class CardService {
         name: dto.name,
         description: dto.description,
         theme: dto.theme,
-        user: dto.userId,
-        column: dto.columnId,
+        userId: dto.userId,
+        columnId: dto.columnId,
       });
 
       delete newCard.user;

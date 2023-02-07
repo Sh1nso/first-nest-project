@@ -27,6 +27,7 @@ export class ContentColumn {
   @ManyToOne(() => User, (user) => user.columns, { onDelete: 'SET NULL' })
   user: User;
 
+  @Column({ nullable: true })
   userId: User[`id`];
 
   @OneToMany(() => Card, (card) => card.column, {

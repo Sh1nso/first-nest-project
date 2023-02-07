@@ -28,7 +28,6 @@ export class ColumnRepository extends Repository<ContentColumn> {
   async getOneColumn(columnId: number, userId: number) {
     const column = await this.columnRepository.findOne({
       where: { id: columnId },
-      relations: ['user'],
     });
 
     if (column && (await this.checkColumnOwner(userId, column))) {
@@ -43,8 +42,7 @@ export class ColumnRepository extends Repository<ContentColumn> {
     userId: number,
     column: ContentColumn,
   ): Promise<boolean> {
-    console.log(column);
-    if (column.user.id === userId) {
+    if (column.userId === userId) {
       return true;
     }
   }

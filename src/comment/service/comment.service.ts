@@ -18,8 +18,8 @@ export class CommentService {
     if (this.checkCountOfComments(dto.cardId)) {
       const newComment = await this.commentRepository.save({
         content: dto.content,
-        user: dto.userId,
-        card: dto.cardId,
+        userId: dto.userId,
+        cardId: dto.cardId,
       });
       return newComment;
     }
